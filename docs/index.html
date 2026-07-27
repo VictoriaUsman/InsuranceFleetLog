@@ -93,13 +93,18 @@
   }
   ::selection { background: var(--route); color: var(--raised); }
 
+  .brand-stripe {
+    height: 4px;
+    background: linear-gradient(90deg, var(--slate), var(--amber), var(--route));
+  }
+
   .wrap {
     max-width: 1180px;
     margin: 0 auto;
-    padding: 1.5rem 1.5rem 4rem;
+    padding: 1.25rem 1.5rem 2.25rem;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.15rem;
   }
 
   /* ---------- header ---------- */
@@ -153,13 +158,22 @@
     overflow: hidden;
   }
   .kpi {
-    background: var(--raised);
-    padding: 0.95rem 1rem 1rem;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--accent, var(--route)) 7%, var(--raised)), var(--raised) 65%);
+    padding: 1rem 1.1rem 1.1rem;
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.4rem;
     border-top: 3px solid var(--accent, var(--route));
   }
+  .kpi-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--accent, var(--route)) 18%, transparent);
+    color: var(--accent, var(--route));
+    margin-bottom: 0.15rem;
+  }
+  .kpi-icon svg { width: 17px; height: 17px; }
   .kpi .label {
     font: 600 0.68rem/1.2 var(--font-body);
     text-transform: uppercase;
@@ -167,9 +181,10 @@
     color: var(--text-faint);
   }
   .kpi .value {
-    font: 700 clamp(1.25rem, 1.9vw, 1.55rem)/1.1 var(--font-mono);
+    font: 700 clamp(1.3rem, 1.9vw, 1.6rem)/1.1 var(--font-mono);
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
+    color: var(--accent, var(--route));
   }
   .kpi .sub { font-size: 0.74rem; color: var(--text-muted); }
 
@@ -215,14 +230,28 @@
   }
   .chart-tooltip strong { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 
-  .insight-list { display: flex; flex-direction: column; gap: 0.85rem; }
+  .insight-list { display: flex; flex-direction: column; gap: 0.9rem; height: 100%; justify-content: space-evenly; }
   .insight {
     border-left: 3px solid var(--accent, var(--route));
-    padding: 0.15rem 0 0.15rem 0.7rem;
+    padding: 0.2rem 0 0.2rem 0.7rem;
+    background: color-mix(in srgb, var(--accent, var(--route)) 5%, transparent);
+    border-radius: 0 6px 6px 0;
   }
   .insight .insight-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
     font: 700 0.78rem/1.3 var(--font-display);
-    margin-bottom: 0.15rem;
+    margin-bottom: 0.2rem;
+  }
+  .insight .insight-pill {
+    font: 700 0.72rem/1 var(--font-mono);
+    color: var(--accent, var(--route));
+    background: color-mix(in srgb, var(--accent, var(--route)) 16%, transparent);
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
   }
   .insight p { margin: 0; font-size: 0.82rem; color: var(--text-muted); }
   .insight code {
@@ -239,11 +268,17 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
   }
-  .hbar-row { display: flex; align-items: center; gap: 0.6rem; margin: 0.55rem 0; }
-  .hbar-label { width: 6.4rem; flex: none; font-size: 0.78rem; color: var(--text-muted); }
-  .hbar-track { flex: 1; background: color-mix(in srgb, var(--ink) 6%, transparent); border-radius: 4px; height: 10px; overflow: hidden; }
-  .hbar-fill { height: 100%; border-radius: 4px; }
-  .hbar-value { width: 4.6rem; flex: none; text-align: right; font: 700 0.8rem var(--font-mono); font-variant-numeric: tabular-nums; }
+  .hbar-row { display: flex; align-items: center; gap: 0.7rem; margin: 0.7rem 0; }
+  .hbar-label { width: 6.4rem; flex: none; font-size: 0.78rem; color: var(--text-muted); font-weight: 600; }
+  .hbar-track { flex: 1; background: color-mix(in srgb, var(--ink) 7%, transparent); border-radius: 6px; height: 15px; overflow: hidden; }
+  .hbar-fill {
+    display: block;
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .hbar-value { width: 5.6rem; flex: none; text-align: right; font: 700 0.82rem var(--font-mono); font-variant-numeric: tabular-nums; }
+  .hbar-value small { font-family: var(--font-body); font-weight: 600; color: var(--text-faint); margin-left: 0.15rem; }
 
   .stacked-bar { display: flex; height: 26px; border-radius: 5px; overflow: hidden; border: 1px solid var(--line); }
   .stacked-seg { height: 100%; }
@@ -330,6 +365,7 @@
   :focus-visible { outline: 2px solid var(--route); outline-offset: 2px; }
 </style>
 
+<div class="brand-stripe"></div>
 <div class="wrap">
 
   <header class="console">
@@ -874,18 +910,28 @@ function fmt(n, decimals = 1) {
 }
 
 /* ---------------- KPI strip ---------------- */
+const ICONS = {
+  activity: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>',
+  home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>',
+  phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>',
+  briefcase: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+  gauge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 12 17.5 6.5"/></svg>',
+  alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+};
+
 function renderKpis() {
   const k = DATA.kpis;
   const items = [
-    { label: 'Total Fleet Miles', value: fmt(k.total_miles, 0), sub: `${k.cars_reporting} of ${k.fleet_size} cars reporting`, accent: 'route' },
-    { label: 'Personal (P0)', value: `${fmt(k.pct_p0)}%`, sub: `${fmt(k.p0_miles, 0)} mi`, accent: 'slate' },
-    { label: 'App On (P1)', value: `${fmt(k.pct_p1)}%`, sub: `${fmt(k.p1_miles, 0)} mi`, accent: 'amber' },
-    { label: 'On A Job (P2)', value: `${fmt(k.pct_p2)}%`, sub: `${fmt(k.p2_miles, 0)} mi`, accent: 'route' },
-    { label: 'Avg Miles / Car', value: fmt(k.avg_miles_per_car, 0), sub: 'per active car this month', accent: 'slate' },
-    { label: 'Renters Not Connected', value: `${k.renters_not_connected}`, sub: `of ${k.renters_total} on the roster`, accent: 'alert' },
+    { label: 'Total Fleet Miles', value: fmt(k.total_miles, 0), sub: `${k.cars_reporting} of ${k.fleet_size} cars reporting`, accent: 'route', icon: 'activity' },
+    { label: 'Personal (P0)', value: `${fmt(k.pct_p0)}%`, sub: `${fmt(k.p0_miles, 0)} mi`, accent: 'slate', icon: 'home' },
+    { label: 'App On (P1)', value: `${fmt(k.pct_p1)}%`, sub: `${fmt(k.p1_miles, 0)} mi`, accent: 'amber', icon: 'phone' },
+    { label: 'On A Job (P2)', value: `${fmt(k.pct_p2)}%`, sub: `${fmt(k.p2_miles, 0)} mi`, accent: 'route', icon: 'briefcase' },
+    { label: 'Avg Miles / Car', value: fmt(k.avg_miles_per_car, 0), sub: 'per active car this month', accent: 'slate', icon: 'gauge' },
+    { label: 'Renters Not Connected', value: `${k.renters_not_connected}`, sub: `of ${k.renters_total} on the roster`, accent: 'alert', icon: 'alert' },
   ];
   document.getElementById('kpi-strip').innerHTML = items.map(i => `
     <div class="kpi" style="--accent: var(--${i.accent})">
+      <div class="kpi-icon">${ICONS[i.icon]}</div>
       <span class="label">${i.label}</span>
       <span class="value">${i.value}</span>
       <span class="sub">${i.sub}</span>
@@ -974,28 +1020,32 @@ function renderInsights() {
     {
       accent: 'route',
       title: 'Fleet Activity',
+      pill: `+${fmt(peakLift, 0)}% peak`,
       html: `The fleet logged <code>${fmt(k.total_miles, 0)} mi</code> in ${DATA.month_label}. The busiest day was <code>${DATA.peak_day.date}</code> at ${fmt(DATA.peak_day.total, 0)} mi — ${fmt(peakLift, 0)}% above the daily average.`,
     },
     {
       accent: 'route',
       title: 'Job Utilization',
+      pill: `${fmt(k.pct_p2)}% P2`,
       html: `<code>${fmt(k.pct_p2)}%</code> of all miles were driven while on a job — the band the insurer prices highest. Personal (P0) miles came in at <code>${fmt(k.pct_p0)}%</code>.`,
     },
     {
       accent: 'amber',
       title: 'Utilization Spread',
+      pill: `#${DATA.best_car.car_id} vs #${DATA.worst_car.car_id}`,
       html: `Car <code>#${DATA.best_car.car_id}</code> spent <code>${fmt(DATA.best_car.p2_share)}%</code> of its miles on a job, the fleet's highest share. Car <code>#${DATA.worst_car.car_id}</code> logged <code>${fmt(DATA.worst_car.p2_share)}%</code> — worth checking whether that renter has connected their app.`,
     },
     {
       accent: 'alert',
       title: 'Data Quality',
+      pill: `${k.renters_not_connected}/${k.renters_total} dark`,
       html: `<code>${k.renters_not_connected} of ${k.renters_total}</code> renters this month have no Argyle data at all — every mile they drove defaults to P0. This is the weekly follow-up list the client asked for.`,
     },
   ];
 
   document.getElementById('insight-list').innerHTML = insights.map(i => `
     <div class="insight" style="--accent: var(--${i.accent})">
-      <div class="insight-title">${i.title}</div>
+      <div class="insight-title">${i.title}<span class="insight-pill">${i.pill}</span></div>
       <p>${i.html}</p>
     </div>`).join('');
 }
@@ -1013,7 +1063,7 @@ function renderBreakdowns() {
     <div class="hbar-row">
       <span class="hbar-label">${c.label}</span>
       <span class="hbar-track"><span class="hbar-fill" style="width:${(c.value / catMax * 100).toFixed(1)}%; background:var(--${c.color})"></span></span>
-      <span class="hbar-value">${fmt(c.value, 0)}</span>
+      <span class="hbar-value">${fmt(c.value, 0)}<small>(${fmt(c.value / k.total_miles * 100, 0)}%)</small></span>
     </div>`).join('');
 
   const notJobPct = 100 - k.pct_p2;
