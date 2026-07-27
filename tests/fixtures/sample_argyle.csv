@@ -1,0 +1,4 @@
+renter_id,start_time,end_time,status
+R1,2026-06-05T12:00:00Z,2026-06-05T12:30:00Z,on_available
+R1,2026-06-05T12:30:00Z,2026-06-05T13:00:00Z,on_job
+R2,2026-06-10T11:15:00Z,2026-06-10T11:45:00Z,on_job

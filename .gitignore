@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+reports/output/*.xlsx
+reports/output/*.csv
+.pytest_cache/
+seed/*.csv
+seed/dashboard_data.json

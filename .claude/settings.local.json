@@ -1,0 +1,33 @@
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8787"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(./.venv/Scripts/python.exe -m scripts.seed_data)",
+      "Read(//tmp/**)",
+      "Bash(./.venv/Scripts/python.exe -m scripts.build_dashboard_data)",
+      "Bash(./.venv/Scripts/python.exe -m pytest tests/ -q)",
+      "Bash(./.venv/Scripts/python.exe -m scripts.manual_report --gps-csv tests/fixtures/sample_gps.csv --assignments-csv tests/fixtures/sample_assignments.csv --argyle-csv tests/fixtures/sample_argyle.csv --month 2026-06 --output-dir reports/output)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"https://fonts.googleapis.com/css2?family=Overpass:wght@700;800&display=swap\" --max-time 10)",
+      "Bash(curl -s -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120 Safari/537.36\" \"https://fonts.googleapis.com/css2?family=Overpass:wght@700;800&display=swap\" -o /tmp/overpass.css --max-time 15)",
+      "Bash(mkdir -p seed/fonts)",
+      "Bash(curl -s -o seed/fonts/overpass-700.woff2 \"https://fonts.gstatic.com/s/overpass/v19/qFdH35WCmI96Ajtm81GlU9s.woff2\" --max-time 20)",
+      "Bash(curl -s -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\) AppleWebKit/537.36 \\(KHTML, like Gecko\\) Chrome/120 Safari/537.36\" \"https://fonts.googleapis.com/css2?family=Overpass+Mono:wght@500;700&display=swap\" -o /tmp/overpass_mono.css --max-time 15)",
+      "Bash(curl -s -o seed/fonts/overpassmono-500.woff2 \"https://fonts.gstatic.com/s/overpassmono/v21/_Xmq-H86tzKDdAPa-KPQZ-AC1i-0tg.woff2\" --max-time 20)",
+      "Bash(python3 -)",
+      "Bash(./.venv/Scripts/python.exe -)",
+      "Bash(cygpath -w /tmp/overpass_mono.css)",
+      "Bash(grep -B1 -A3 \"^/\\\\* latin \\\\*/\" /tmp/overpass_mono.css)",
+      "Bash(awk *)",
+      "Bash(mv seed/fonts/overpassmono-500.woff2 seed/fonts/overpassmono-700.woff2)",
+      "Bash(base64 -w0 seed/fonts/overpass-700.woff2)",
+      "Bash(base64 -w0 seed/fonts/overpassmono-700.woff2)",
+      "Bash(./.venv/Scripts/python.exe \"/c/Users/THISPC/AppData/Local/Temp/claude/C--Data-Engineering-InsuranceLog/7866d565-8d9e-4151-8399-2215e1b88983/scratchpad/render_dashboard.py\")",
+      "Artifact",
+      "Read(//c/Users/THISPC/AppData/Local/Temp/claude/C--Data-Engineering-InsuranceLog/7866d565-8d9e-4151-8399-2215e1b88983/scratchpad/**)",
+      "Bash('/c/Data Engineering/InsuranceLog/.venv/Scripts/python.exe' -c ' *)",
+      "Bash(node --check extracted.js)"
+    ]
+  }
+}

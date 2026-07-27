@@ -1,0 +1,629 @@
+<title>Fleet Mileage Reconciliation — June 2026</title>
+<style>
+  @font-face {
+    font-family: 'Overpass';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{OVERPASS_B64}}) format('woff2');
+  }
+  @font-face {
+    font-family: 'Overpass Mono';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url(data:font/woff2;base64,{{OVERPASSMONO_B64}}) format('woff2');
+  }
+
+  :root {
+    --ink: #142433;
+    --paper: #f3f7f6;
+    --raised: #ffffff;
+    --line: #d9e2e1;
+    --text: var(--ink);
+    --text-muted: #55636d;
+    --text-faint: #7c8894;
+    --route: #0e7c7b;
+    --route-strong: #0a5f5f;
+    --amber: #b8790a;
+    --slate: #6f7c8c;
+    --alert: #c8443a;
+    --radius: 8px;
+    --shadow: 0 1px 2px rgba(20, 36, 51, 0.06), 0 4px 14px rgba(20, 36, 51, 0.05);
+
+    --font-display: 'Overpass', ui-sans-serif, system-ui, sans-serif;
+    --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: 'Overpass Mono', ui-monospace, 'Cascadia Code', 'SF Mono', Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #eaf2f1;
+      --paper: #0e191e;
+      --raised: #152227;
+      --line: #253a3f;
+      --text-muted: #9db0b0;
+      --text-faint: #75898a;
+      --route: #45c7bd;
+      --route-strong: #7fdcd3;
+      --amber: #eeae3f;
+      --slate: #93a3ac;
+      --alert: #ec6d63;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #eaf2f1;
+    --paper: #0e191e;
+    --raised: #152227;
+    --line: #253a3f;
+    --text-muted: #9db0b0;
+    --text-faint: #75898a;
+    --route: #45c7bd;
+    --route-strong: #7fdcd3;
+    --amber: #eeae3f;
+    --slate: #93a3ac;
+    --alert: #ec6d63;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
+  }
+  :root[data-theme="light"] {
+    --ink: #142433;
+    --paper: #f3f7f6;
+    --raised: #ffffff;
+    --line: #d9e2e1;
+    --text-muted: #55636d;
+    --text-faint: #7c8894;
+    --route: #0e7c7b;
+    --route-strong: #0a5f5f;
+    --amber: #b8790a;
+    --slate: #6f7c8c;
+    --alert: #c8443a;
+    --shadow: 0 1px 2px rgba(20, 36, 51, 0.06), 0 4px 14px rgba(20, 36, 51, 0.05);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--route); color: var(--raised); }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 1.5rem 1.5rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  /* ---------- header ---------- */
+  header.console {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding-bottom: 1.1rem;
+    border-bottom: 2px solid var(--ink);
+  }
+  .title-block { display: flex; flex-direction: column; gap: 0.3rem; }
+  .eyebrow {
+    font: 600 0.72rem/1 var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--route);
+  }
+  h1 {
+    font: 700 clamp(1.5rem, 2.6vw, 2rem)/1.15 var(--font-display);
+    margin: 0;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+  .subtitle { color: var(--text-muted); font-size: 0.92rem; max-width: 46ch; }
+  .demo-pill {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--alert);
+    color: var(--alert);
+    border-radius: 999px;
+    font: 600 0.72rem/1 var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+  .demo-pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--alert); }
+
+  /* ---------- kpi strip ---------- */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .kpi {
+    background: var(--raised);
+    padding: 0.95rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    border-top: 3px solid var(--accent, var(--route));
+  }
+  .kpi .label {
+    font: 600 0.68rem/1.2 var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+  }
+  .kpi .value {
+    font: 700 clamp(1.25rem, 1.9vw, 1.55rem)/1.1 var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+  .kpi .sub { font-size: 0.74rem; color: var(--text-muted); }
+
+  /* ---------- generic panel ---------- */
+  .panel {
+    background: var(--raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.1rem 1.2rem 1.3rem;
+  }
+  .panel h2 {
+    font: 700 0.95rem/1.2 var(--font-display);
+    margin: 0 0 0.15rem;
+  }
+  .panel .panel-sub { color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.9rem; }
+
+  /* ---------- chart + insights row ---------- */
+  .main-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+    gap: 1rem;
+    align-items: stretch;
+  }
+  #chart-wrap { position: relative; }
+  #trend-svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .legend { display: flex; gap: 1.1rem; margin-top: 0.6rem; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.76rem; color: var(--text-muted); }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 2px; }
+  .chart-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--ink);
+    color: var(--paper);
+    font: 600 0.72rem/1.4 var(--font-body);
+    padding: 0.5rem 0.65rem;
+    border-radius: 6px;
+    transform: translate(-50%, -108%);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    z-index: 5;
+  }
+  .chart-tooltip strong { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  .insight-list { display: flex; flex-direction: column; gap: 0.85rem; }
+  .insight {
+    border-left: 3px solid var(--accent, var(--route));
+    padding: 0.15rem 0 0.15rem 0.7rem;
+  }
+  .insight .insight-title {
+    font: 700 0.78rem/1.3 var(--font-display);
+    margin-bottom: 0.15rem;
+  }
+  .insight p { margin: 0; font-size: 0.82rem; color: var(--text-muted); }
+  .insight code {
+    font-family: var(--font-mono);
+    background: color-mix(in srgb, var(--accent, var(--route)) 12%, transparent);
+    padding: 0.05rem 0.3rem;
+    border-radius: 4px;
+    font-size: 0.78rem;
+  }
+
+  /* ---------- breakdown row ---------- */
+  .breakdown-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+  .hbar-row { display: flex; align-items: center; gap: 0.6rem; margin: 0.55rem 0; }
+  .hbar-label { width: 6.4rem; flex: none; font-size: 0.78rem; color: var(--text-muted); }
+  .hbar-track { flex: 1; background: color-mix(in srgb, var(--ink) 6%, transparent); border-radius: 4px; height: 10px; overflow: hidden; }
+  .hbar-fill { height: 100%; border-radius: 4px; }
+  .hbar-value { width: 4.6rem; flex: none; text-align: right; font: 700 0.8rem var(--font-mono); font-variant-numeric: tabular-nums; }
+
+  .stacked-bar { display: flex; height: 26px; border-radius: 5px; overflow: hidden; border: 1px solid var(--line); }
+  .stacked-seg { height: 100%; }
+  .stacked-caption { display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.78rem; color: var(--text-muted); }
+  .stacked-caption strong { font-family: var(--font-mono); color: var(--text); font-variant-numeric: tabular-nums; }
+
+  /* ---------- table ---------- */
+  .table-panel { padding: 1.1rem 0 0.4rem; }
+  .table-panel .panel-head { padding: 0 1.2rem; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.5rem; }
+  .table-scroll { overflow-x: auto; margin-top: 0.8rem; }
+  table { border-collapse: collapse; width: 100%; min-width: 720px; }
+  thead th {
+    position: sticky; top: 0;
+    background: var(--raised);
+    text-align: left;
+    font: 600 0.68rem/1.2 var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-faint);
+    padding: 0.5rem 1.2rem;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  thead th:hover { color: var(--route); }
+  thead th.sorted::after { content: ' \2193'; }
+  thead th.sorted.asc::after { content: ' \2191'; }
+  td, th { padding: 0.5rem 1.2rem; }
+  td { border-bottom: 1px solid var(--line); font-size: 0.85rem; }
+  tbody tr:hover { background: color-mix(in srgb, var(--route) 6%, transparent); }
+  td.num, th.num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .share-cell { display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; }
+  .share-pill { width: 46px; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 8%, transparent); overflow: hidden; }
+  .share-pill > span { display: block; height: 100%; background: var(--route); }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 1rem;
+    font-size: 0.76rem;
+    color: var(--text-faint);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  footer code { font-family: var(--font-mono); }
+
+  @media (max-width: 900px) {
+    .kpi-strip { grid-template-columns: repeat(3, 1fr); }
+    .main-row { grid-template-columns: 1fr; }
+    .breakdown-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 520px) {
+    .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .panel, .kpi { animation: rise 0.4s ease both; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  a { color: var(--route); }
+  :focus-visible { outline: 2px solid var(--route); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+
+  <header class="console">
+    <div class="title-block">
+      <span class="eyebrow">Insurance Mileage Reconciliation</span>
+      <h1>Fleet Mileage Split — <span id="month-label">June 2026</span></h1>
+      <p class="subtitle">P0 (personal) + P1 (app on) + P2 (on a job), reconciled exactly against GPS totals for every car.</p>
+    </div>
+    <span class="demo-pill">Demo data — not a real fleet report</span>
+  </header>
+
+  <section class="kpi-strip" id="kpi-strip"></section>
+
+  <section class="main-row">
+    <div class="panel" id="chart-wrap">
+      <h2>Daily Fleet Miles</h2>
+      <p class="panel-sub">Stacked by category, whole month. Hover a day for the exact split.</p>
+      <svg id="trend-svg" viewBox="0 0 900 280" preserveAspectRatio="none"></svg>
+      <div class="chart-tooltip" id="tooltip"></div>
+      <div class="legend">
+        <span class="legend-item"><span class="legend-swatch" style="background:var(--slate)"></span>P0 — personal</span>
+        <span class="legend-item"><span class="legend-swatch" style="background:var(--amber)"></span>P1 — app on</span>
+        <span class="legend-item"><span class="legend-swatch" style="background:var(--route)"></span>P2 — on a job</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Executive Insights</h2>
+      <p class="panel-sub">Generated from this month's numbers</p>
+      <div class="insight-list" id="insight-list"></div>
+    </div>
+  </section>
+
+  <section class="breakdown-row" id="breakdown-row">
+    <div class="panel">
+      <h2>Miles by Category</h2>
+      <p class="panel-sub">Share of total fleet miles</p>
+      <div id="category-bars"></div>
+    </div>
+    <div class="panel">
+      <h2>Job Utilization</h2>
+      <p class="panel-sub">On a job vs. not, fleet-wide</p>
+      <div id="job-bar"></div>
+    </div>
+    <div class="panel">
+      <h2>Fleet Utilization Bands</h2>
+      <p class="panel-sub">Cars grouped by on-job mileage share</p>
+      <div id="band-bars"></div>
+    </div>
+  </section>
+
+  <section class="panel table-panel">
+    <div class="panel-head">
+      <div>
+        <h2>Per-Car Ledger</h2>
+        <p class="panel-sub">Click a column to sort. This is the line-level detail behind the fleet totals above.</p>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table id="car-table">
+        <thead>
+          <tr>
+            <th data-key="car_id">Car</th>
+            <th data-key="vin">VIN</th>
+            <th data-key="trip_count" class="num">Trips</th>
+            <th data-key="P0" class="num">P0 mi</th>
+            <th data-key="P1" class="num">P1 mi</th>
+            <th data-key="P2" class="num">P2 mi</th>
+            <th data-key="total" class="num">Total mi</th>
+            <th data-key="p2_share" class="num">On-Job Share</th>
+          </tr>
+        </thead>
+        <tbody id="car-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <span>Synthetic seed data generated by <code>scripts/seed_data.py</code>, run through the real <code>calc.mileage_split</code> engine — every number here is computed, not typed in. Replace the seed CSVs with live GPS/Argyle/GoHighLevel exports to make this real.</span>
+    <span id="reconcile-note"></span>
+  </footer>
+
+</div>
+
+<script>
+const DATA = {{DASHBOARD_DATA_JSON}};
+
+const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+function fmt(n, decimals = 1) {
+  return Number(n).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+/* ---------------- KPI strip ---------------- */
+function renderKpis() {
+  const k = DATA.kpis;
+  const items = [
+    { label: 'Total Fleet Miles', value: fmt(k.total_miles, 0), sub: `${k.cars_reporting} of ${k.fleet_size} cars reporting`, accent: 'route' },
+    { label: 'Personal (P0)', value: `${fmt(k.pct_p0)}%`, sub: `${fmt(k.p0_miles, 0)} mi`, accent: 'slate' },
+    { label: 'App On (P1)', value: `${fmt(k.pct_p1)}%`, sub: `${fmt(k.p1_miles, 0)} mi`, accent: 'amber' },
+    { label: 'On A Job (P2)', value: `${fmt(k.pct_p2)}%`, sub: `${fmt(k.p2_miles, 0)} mi`, accent: 'route' },
+    { label: 'Avg Miles / Car', value: fmt(k.avg_miles_per_car, 0), sub: 'per active car this month', accent: 'slate' },
+    { label: 'Renters Not Connected', value: `${k.renters_not_connected}`, sub: `of ${k.renters_total} on the roster`, accent: 'alert' },
+  ];
+  document.getElementById('kpi-strip').innerHTML = items.map(i => `
+    <div class="kpi" style="--accent: var(--${i.accent})">
+      <span class="label">${i.label}</span>
+      <span class="value">${i.value}</span>
+      <span class="sub">${i.sub}</span>
+    </div>`).join('');
+}
+
+/* ---------------- trend chart ---------------- */
+function renderChart() {
+  const days = DATA.daily_trend;
+  const W = 900, H = 280, padTop = 18, padBottom = 34, padLeft = 6, padRight = 6;
+  const plotH = H - padTop - padBottom;
+  const maxTotal = Math.max(...days.map(d => d.total)) * 1.08;
+  const n = days.length;
+  const xFor = (i) => padLeft + (i / (n - 1)) * (W - padLeft - padRight);
+  const yFor = (v) => padTop + plotH - (v / maxTotal) * plotH;
+
+  const p0Top = days.map(d => d.P0);
+  const p1Top = days.map((d, i) => p0Top[i] + d.P1);
+  const p2Top = days.map((d, i) => p1Top[i] + d.P2);
+
+  function areaPath(topArr, bottomArr) {
+    const top = topArr.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xFor(i).toFixed(1)} ${yFor(v).toFixed(1)}`).join(' ');
+    const bottom = bottomArr.map((v, i) => `L ${xFor(n - 1 - i).toFixed(1)} ${yFor(bottomArr[n - 1 - i]).toFixed(1)}`).join(' ');
+    return `${top} ${bottomArr.length ? bottom : ''} Z`;
+  }
+  const zero = days.map(() => 0);
+
+  const svg = document.getElementById('trend-svg');
+  const gridLines = [0.25, 0.5, 0.75, 1].map(f => {
+    const y = yFor(maxTotal * f / 1.08);
+    return `<line x1="${padLeft}" x2="${W - padRight}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line)" stroke-width="1" />`;
+  }).join('');
+
+  const xLabels = [0, 4, 9, 14, 19, 24, 29].filter(i => i < n).map(i => {
+    const label = days[i].date.slice(5).replace('-', '/');
+    return `<text x="${xFor(i)}" y="${H - 10}" font-size="10" fill="var(--text-faint)" font-family="var(--font-body)" text-anchor="middle">${label}</text>`;
+  }).join('');
+
+  const peakIdx = days.findIndex(d => d.date === DATA.peak_day.date);
+  const peakDot = peakIdx >= 0 ? `
+    <circle cx="${xFor(peakIdx)}" cy="${yFor(p2Top[peakIdx])}" r="4" fill="var(--route-strong)" stroke="var(--raised)" stroke-width="1.5" />
+    <text x="${xFor(peakIdx)}" y="${yFor(p2Top[peakIdx]) - 10}" font-size="10" font-weight="700" fill="var(--route-strong)" font-family="var(--font-body)" text-anchor="middle">peak</text>
+  ` : '';
+
+  svg.innerHTML = `
+    ${gridLines}
+    <path d="${areaPath(p0Top, zero)}" fill="var(--slate)" fill-opacity="0.55" />
+    <path d="${areaPath(p1Top, p0Top)}" fill="var(--amber)" fill-opacity="0.6" />
+    <path d="${areaPath(p2Top, p1Top)}" fill="var(--route)" fill-opacity="0.75" />
+    <path d="${p2Top.map((v, i) => `${i === 0 ? 'M' : 'L'} ${xFor(i).toFixed(1)} ${yFor(v).toFixed(1)}`).join(' ')}"
+          fill="none" stroke="var(--route-strong)" stroke-width="1.75" />
+    ${peakDot}
+    ${xLabels}
+  `;
+
+  // hover interaction
+  const tooltip = document.getElementById('tooltip');
+  const wrap = document.getElementById('chart-wrap');
+  const hitLayer = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  hitLayer.setAttribute('x', 0); hitLayer.setAttribute('y', 0);
+  hitLayer.setAttribute('width', W); hitLayer.setAttribute('height', H);
+  hitLayer.setAttribute('fill', 'transparent');
+  svg.appendChild(hitLayer);
+
+  svg.addEventListener('mousemove', (e) => {
+    const rect = svg.getBoundingClientRect();
+    const relX = ((e.clientX - rect.left) / rect.width) * W;
+    const i = Math.max(0, Math.min(n - 1, Math.round(((relX - padLeft) / (W - padLeft - padRight)) * (n - 1))));
+    const d = days[i];
+    tooltip.style.left = `${((e.clientX - rect.left) / rect.width) * 100}%`;
+    tooltip.style.top = `${((e.clientY - rect.top) / rect.height) * 100}%`;
+    tooltip.style.opacity = 1;
+    tooltip.innerHTML = `${d.date} &nbsp; <strong>${fmt(d.total, 1)} mi</strong><br>
+      P0 <strong>${fmt(d.P0)}</strong> &middot; P1 <strong>${fmt(d.P1)}</strong> &middot; P2 <strong>${fmt(d.P2)}</strong>`;
+  });
+  svg.addEventListener('mouseleave', () => { tooltip.style.opacity = 0; });
+}
+
+/* ---------------- insights ---------------- */
+function renderInsights() {
+  const k = DATA.kpis;
+  const avgDaily = DATA.daily_trend.reduce((s, d) => s + d.total, 0) / DATA.daily_trend.length;
+  const peakLift = ((DATA.peak_day.total / avgDaily) - 1) * 100;
+
+  const insights = [
+    {
+      accent: 'route',
+      title: 'Fleet Activity',
+      html: `The fleet logged <code>${fmt(k.total_miles, 0)} mi</code> in ${DATA.month_label}. The busiest day was <code>${DATA.peak_day.date}</code> at ${fmt(DATA.peak_day.total, 0)} mi — ${fmt(peakLift, 0)}% above the daily average.`,
+    },
+    {
+      accent: 'route',
+      title: 'Job Utilization',
+      html: `<code>${fmt(k.pct_p2)}%</code> of all miles were driven while on a job — the band the insurer prices highest. Personal (P0) miles came in at <code>${fmt(k.pct_p0)}%</code>.`,
+    },
+    {
+      accent: 'amber',
+      title: 'Utilization Spread',
+      html: `Car <code>#${DATA.best_car.car_id}</code> spent <code>${fmt(DATA.best_car.p2_share)}%</code> of its miles on a job, the fleet's highest share. Car <code>#${DATA.worst_car.car_id}</code> logged <code>${fmt(DATA.worst_car.p2_share)}%</code> — worth checking whether that renter has connected their app.`,
+    },
+    {
+      accent: 'alert',
+      title: 'Data Quality',
+      html: `<code>${k.renters_not_connected} of ${k.renters_total}</code> renters this month have no Argyle data at all — every mile they drove defaults to P0. This is the weekly follow-up list the client asked for.`,
+    },
+  ];
+
+  document.getElementById('insight-list').innerHTML = insights.map(i => `
+    <div class="insight" style="--accent: var(--${i.accent})">
+      <div class="insight-title">${i.title}</div>
+      <p>${i.html}</p>
+    </div>`).join('');
+}
+
+/* ---------------- breakdown panels ---------------- */
+function renderBreakdowns() {
+  const k = DATA.kpis;
+  const catMax = Math.max(k.p0_miles, k.p1_miles, k.p2_miles);
+  const cats = [
+    { label: 'P0 Personal', value: k.p0_miles, color: 'slate' },
+    { label: 'P1 App On', value: k.p1_miles, color: 'amber' },
+    { label: 'P2 On Job', value: k.p2_miles, color: 'route' },
+  ];
+  document.getElementById('category-bars').innerHTML = cats.map(c => `
+    <div class="hbar-row">
+      <span class="hbar-label">${c.label}</span>
+      <span class="hbar-track"><span class="hbar-fill" style="width:${(c.value / catMax * 100).toFixed(1)}%; background:var(--${c.color})"></span></span>
+      <span class="hbar-value">${fmt(c.value, 0)}</span>
+    </div>`).join('');
+
+  const notJobPct = 100 - k.pct_p2;
+  document.getElementById('job-bar').innerHTML = `
+    <div class="stacked-bar">
+      <span class="stacked-seg" style="width:${notJobPct}%; background:var(--slate)"></span>
+      <span class="stacked-seg" style="width:${k.pct_p2}%; background:var(--route)"></span>
+    </div>
+    <div class="stacked-caption">
+      <span>Not on job <strong>${fmt(notJobPct)}%</strong></span>
+      <span>On job <strong>${fmt(k.pct_p2)}%</strong></span>
+    </div>`;
+
+  const bands = DATA.utilization_bands;
+  const bandColors = { 'High (>50% on job)': 'route', 'Medium (25-50%)': 'amber', 'Low (<25%)': 'slate' };
+  const bandMax = Math.max(...Object.values(bands));
+  document.getElementById('band-bars').innerHTML = Object.entries(bands).map(([label, count]) => `
+    <div class="hbar-row">
+      <span class="hbar-label">${label}</span>
+      <span class="hbar-track"><span class="hbar-fill" style="width:${(count / bandMax * 100).toFixed(1)}%; background:var(--${bandColors[label]})"></span></span>
+      <span class="hbar-value">${count} cars</span>
+    </div>`).join('');
+}
+
+/* ---------------- car ledger table ---------------- */
+let sortState = { key: 'total', asc: false };
+function renderTable() {
+  const rows = DATA.cars.map(c => ({ ...c, p2_share: c.total ? (c.P2 / c.total * 100) : 0 }));
+  rows.sort((a, b) => {
+    const dir = sortState.asc ? 1 : -1;
+    const av = a[sortState.key], bv = b[sortState.key];
+    if (typeof av === 'string') return av.localeCompare(bv) * dir;
+    return (av - bv) * dir;
+  });
+
+  document.getElementById('car-tbody').innerHTML = rows.map(c => `
+    <tr>
+      <td>#${c.car_id}</td>
+      <td>${c.vin}</td>
+      <td class="num">${c.trip_count}</td>
+      <td class="num">${fmt(c.P0)}</td>
+      <td class="num">${fmt(c.P1)}</td>
+      <td class="num">${fmt(c.P2)}</td>
+      <td class="num">${fmt(c.total)}</td>
+      <td class="num">
+        <span class="share-cell">
+          ${fmt(c.p2_share)}%
+          <span class="share-pill"><span style="width:${c.p2_share.toFixed(1)}%"></span></span>
+        </span>
+      </td>
+    </tr>`).join('');
+
+  document.querySelectorAll('#car-table thead th').forEach(th => {
+    th.classList.toggle('sorted', th.dataset.key === sortState.key);
+    th.classList.toggle('asc', th.dataset.key === sortState.key && sortState.asc);
+  });
+}
+document.querySelectorAll('#car-table thead th').forEach(th => {
+  th.addEventListener('click', () => {
+    if (sortState.key === th.dataset.key) sortState.asc = !sortState.asc;
+    else { sortState.key = th.dataset.key; sortState.asc = false; }
+    renderTable();
+  });
+});
+
+/* ---------------- footer reconciliation note ---------------- */
+function renderFooterNote() {
+  const k = DATA.kpis;
+  const sum = Math.round((k.p0_miles + k.p1_miles + k.p2_miles) * 100) / 100;
+  const ok = sum === k.total_miles;
+  document.getElementById('reconcile-note').textContent =
+    `P0+P1+P2 = ${fmt(sum)} mi vs. GPS total ${fmt(k.total_miles)} mi — ${ok ? 'reconciles exactly' : 'MISMATCH'}`;
+}
+
+renderKpis();
+renderChart();
+renderInsights();
+renderBreakdowns();
+renderTable();
+renderFooterNote();
+</script>
