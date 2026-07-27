@@ -252,7 +252,25 @@
 
   /* ---------- table ---------- */
   .table-panel { padding: 1.1rem 0 0.4rem; }
-  .table-panel .panel-head { padding: 0 1.2rem; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.5rem; }
+  .table-panel .panel-head { padding: 0 1.2rem; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.75rem; }
+
+  .export-actions { display: flex; gap: 0.5rem; flex: none; }
+  .btn-export {
+    display: inline-flex; align-items: center;
+    font: 600 0.78rem/1 var(--font-body);
+    padding: 0.5rem 0.85rem;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--raised);
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .btn-export svg { margin-right: 0.4rem; flex: none; }
+  .btn-export:hover { border-color: var(--route); color: var(--route); }
+  .btn-export-primary { background: var(--route); border-color: var(--route); color: var(--raised); }
+  .btn-export-primary:hover { background: var(--route-strong); border-color: var(--route-strong); color: var(--raised); }
   .table-scroll { overflow-x: auto; margin-top: 0.8rem; }
   table { border-collapse: collapse; width: 100%; min-width: 720px; }
   thead th {
@@ -368,6 +386,16 @@
       <div>
         <h2>Per-Car Ledger</h2>
         <p class="panel-sub">Click a column to sort. This is the line-level detail behind the fleet totals above.</p>
+      </div>
+      <div class="export-actions">
+        <button class="btn-export" id="btn-csv" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+          Download CSV
+        </button>
+        <button class="btn-export btn-export-primary" id="btn-xlsx" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+          Download Excel
+        </button>
       </div>
     </div>
     <div class="table-scroll">
@@ -619,6 +647,69 @@ function renderFooterNote() {
   document.getElementById('reconcile-note').textContent =
     `P0+P1+P2 = ${fmt(sum)} mi vs. GPS total ${fmt(k.total_miles)} mi — ${ok ? 'reconciles exactly' : 'MISMATCH'}`;
 }
+
+/* ---------------- report export ---------------- */
+/* Same columns/rows as reports/excel_report.py's build_report_dataframe():
+   car_id, vin, P0, P1, P2, total, plus a FLEET TOTAL row. */
+function monthSlug() {
+  return DATA.daily_trend[0].date.slice(0, 7);
+}
+function reportRows() {
+  const k = DATA.kpis;
+  return [
+    ...DATA.cars.map(c => ({ car_id: c.car_id, vin: c.vin, P0: c.P0, P1: c.P1, P2: c.P2, total: c.total })),
+    { car_id: 'FLEET TOTAL', vin: '', P0: k.p0_miles, P1: k.p1_miles, P2: k.p2_miles, total: k.total_miles },
+  ];
+}
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function downloadCsv() {
+  const header = ['car_id', 'vin', 'P0', 'P1', 'P2', 'total'];
+  const lines = [header.join(',')];
+  reportRows().forEach(r => lines.push(header.map(h => r[h]).join(',')));
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  triggerDownload(blob, `mileage_report_${monthSlug()}.csv`);
+}
+function downloadExcel() {
+  const columns = [
+    { key: 'car_id', label: 'Car ID' },
+    { key: 'vin', label: 'VIN' },
+    { key: 'P0', label: 'P0 (Personal)' },
+    { key: 'P1', label: 'P1 (App On)' },
+    { key: 'P2', label: 'P2 (On Job)' },
+    { key: 'total', label: 'Total Miles' },
+  ];
+  let table = '<table border="1"><thead><tr>' +
+    columns.map(c => `<th>${c.label}</th>`).join('') + '</tr></thead><tbody>';
+  reportRows().forEach(r => {
+    table += '<tr>' + columns.map(c => {
+      const v = r[c.key];
+      return typeof v === 'number'
+        ? `<td style="mso-number-format:'0.00'">${v}</td>`
+        : `<td>${v}</td>`;
+    }).join('') + '</tr>';
+  });
+  table += '</tbody></table>';
+  // Excel opens this as a real worksheet (the classic "HTML masquerading as
+  // .xls" trick) - no in-browser zip/XML writer needed for a demo export.
+  const doc = `<html xmlns:x="urn:schemas-microsoft-com:office:excel">
+    <head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
+    <x:Name>${DATA.month_label}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+    </x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
+    <body>${table}</body></html>`;
+  const blob = new Blob([doc], { type: 'application/vnd.ms-excel' });
+  triggerDownload(blob, `mileage_report_${monthSlug()}.xls`);
+}
+document.getElementById('btn-csv').addEventListener('click', downloadCsv);
+document.getElementById('btn-xlsx').addEventListener('click', downloadExcel);
 
 renderKpis();
 renderChart();
